@@ -41,7 +41,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
 }
 
 // Window stuff
-Window::Window(int width, int height, const char* name) noexcept
+Window::Window(int width, int height, const char* name)
 {
 	// calculate window size
 	RECT wr;
@@ -49,7 +49,10 @@ Window::Window(int width, int height, const char* name) noexcept
 	wr.right = width + wr.left;
 	wr.top = 100;
 	wr.bottom = height + wr.top;
-	AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
+	if (FAILED(AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE)))
+	{
+		throw(WND_LAST_EXCEPT());
+	}
 	// create window & get hWnd
 	hWnd = CreateWindow(
 		WindowClass::GetName(), name,
@@ -57,6 +60,12 @@ Window::Window(int width, int height, const char* name) noexcept
 		CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
 		NULL, NULL, WindowClass::GetInstance(), this
 	);
+
+	// check window handle
+	if (hWnd == NULL)
+	{
+		throw WND_LAST_EXCEPT();
+	}
 	// show window
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
 }
@@ -137,20 +146,22 @@ const char* Window::Exception::GetType() const noexcept
 std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept
 {
 	char* pMsgBuf = nullptr;
+	// windows will allocate memory for err string and make our pointer point to it
 	DWORD nMsgLen = FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER |
 		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		reinterpret_cast<LPSTR>(&pMsgBuf), 0, NULL
 	);
-
+	// 0 string length returned indicates a failure
 	if (nMsgLen == 0)
 	{
 		return "Unidentified error code";
 	}
-
+	// copy error string from windows-allocated buffer to std::string
 	std::string errorString = pMsgBuf;
 	LocalFree(pMsgBuf);
+	// free windows buffer
 	return errorString;
 }
 
