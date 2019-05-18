@@ -116,13 +116,21 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 
 		/* ------------Keyboard messages-------------*/
 	case WM_KEYDOWN:
-		keyBoard.OnKeyPressed(static_cast<unsigned char>(wParam));
+	case WM_SYSKEYDOWN:
+		if (!(lParam & 0x40000000) || keyBoard.AutorepeatIsEnable())
+		{
+			keyBoard.OnKeyPressed(static_cast<unsigned char>(wParam));
+		}
 		break;
 	case WM_KEYUP:
+	case WM_SYSKEYUP:
 		keyBoard.OnKeyReleased(static_cast<unsigned char>(wParam));
 		break;
 	case WM_CHAR:
 		keyBoard.OnChar(static_cast<unsigned char>(wParam));
+		break;
+	case WM_KILLFOCUS:
+		keyBoard.ClearState();
 		break;
 	}
 
