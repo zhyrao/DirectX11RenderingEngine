@@ -87,6 +87,26 @@ void Window::SetTitile(const std::string & title)
 	}
 }
 
+std::optional<int> Window::ProcessMessages()
+{
+	MSG msg;
+
+	// while queue has messages, remove and dispatch them
+	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+	{
+		// check for quit message 
+		if (msg.message == WM_QUIT)
+		{
+			return msg.wParam;
+		}
+
+		// Translate and dispatch message
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+	return {};
+}
+
 LRESULT CALLBACK Window::HandleMessageSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept
 {
 	// use create parameter passed in from createWindow() to store window 
