@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Window.h"
+#include "Timer.h"
 
 class App
 {
@@ -13,5 +14,6 @@ private:
 
 private:
 	Window wnd;
+	Timer timer;
 };
 
