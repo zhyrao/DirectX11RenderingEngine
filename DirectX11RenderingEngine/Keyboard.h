@@ -20,6 +20,11 @@ public:
 		Type type;
 		unsigned char code;
 	public:
+		Event() noexcept
+			:
+			type(Type::Invalid),
+			code(0u)
+		{}
 		Event(Type type, unsigned char code) noexcept
 			:
 			type(Type::Invalid),

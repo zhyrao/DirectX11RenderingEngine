@@ -1,15 +1,14 @@
 #include "Window.h"
-
+#include <sstream>
 
 int CALLBACK WinMain(
-			_In_ HINSTANCE hInstance,
-		    _In_opt_ HINSTANCE hPrevInstance,
-	        _In_ LPSTR lpCmdLine,
-			_In_ int nShowCmd)
+			 HINSTANCE hInstance,
+		     HINSTANCE hPrevInstance,
+	         LPSTR lpCmdLine,
+			 int nShowCmd)
 {
 	try
 	{
-
 		Window wnd(800, 600, "Tiny Engine");
 
 		// message pump
@@ -22,7 +21,7 @@ int CALLBACK WinMain(
 		}
 		if (gResult == -1)
 		{
-			return -1;
+			throw WND_LAST_EXCEPT();
 		}
 	}
 	catch (const ExceptionClass& e)
