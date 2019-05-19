@@ -1,5 +1,4 @@
-#include "Window.h"
-#include <sstream>
+#include "App.h"
 
 int CALLBACK WinMain(
 			 HINSTANCE hInstance,
@@ -9,20 +8,7 @@ int CALLBACK WinMain(
 {
 	try
 	{
-		Window wnd(800, 600, "Tiny Engine");
-
-		// message pump
-		MSG msg;
-		BOOL gResult;
-		while ((gResult = GetMessage(&msg, NULL, 0, 0)) > 0)
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-		if (gResult == -1)
-		{
-			throw WND_LAST_EXCEPT();
-		}
+		return App{}.Go();
 	}
 	catch (const ExceptionClass& e)
 	{
