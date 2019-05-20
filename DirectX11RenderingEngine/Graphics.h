@@ -45,6 +45,7 @@ public:
 
 	void EndFrame();
 	void ClearBuffer(float r, float g, float b) noexcept;
+	void DrawTriangle();
 private:
 #ifndef NDEBUG
 	DxgiInfoManager infoManager;

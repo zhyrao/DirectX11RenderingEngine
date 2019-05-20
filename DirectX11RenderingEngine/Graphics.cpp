@@ -97,6 +97,40 @@ void Graphics::ClearBuffer(float r, float g, float b) noexcept
 	pContext->ClearRenderTargetView(pTarget.Get(), color);
 }
 
+void Graphics::DrawTriangle()
+{
+	namespace wrl = Microsoft::WRL;
+	HRESULT hr;
+
+	struct Vertex
+	{
+		float x;
+		float y;
+	};
+
+	const Vertex vertices[] = {
+		{ .0f, .5f },
+		{ .5, 0.5f },
+		{ -.5f,-.5f }
+	};
+
+	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;
+	D3D11_BUFFER_DESC bd = {};
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.CPUAccessFlags = 0;
+	bd.MiscFlags = 0;
+	bd.ByteWidth = sizeof(vertices);
+	bd.StructureByteStride = sizeof(Vertex);
+	D3D11_SUBRESOURCE_DATA sd = {};
+	sd.pSysMem = vertices;
+	GFX_THROW_INFO(pDevice->CreateBuffer(&bd, &sd, &pVertexBuffer));
+	const UINT stride = sizeof(Vertex);
+	const UINT offset = 0u;
+	pContext->IASetVertexBuffers(0, 1, &pVertexBuffer, &stride, &offset);
+		pContext->Draw(3, 0);
+}
+
 Graphics::HrException::HrException(int line, const char * file, HRESULT hr, std::vector<std::string> infoMsgs) noexcept
 	:
 	Exception(line, file),
