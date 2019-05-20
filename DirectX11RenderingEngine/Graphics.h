@@ -1,8 +1,8 @@
 #pragma once
-
 #include "Win.h"
 #include "ExceptionClass.h"
 #include <d3d11.h>
+#include <wrl.h>
 #include <vector>
 #include "DxgiInfoManager.h"
 
@@ -41,7 +41,7 @@ public:
 	Graphics(HWND hWnd);
 	Graphics(const Graphics&) = delete;
 	Graphics& operator=(const Graphics&) = delete;
-	~Graphics();
+	~Graphics() = default;
 
 	void EndFrame();
 	void ClearBuffer(float r, float g, float b) noexcept;
@@ -49,9 +49,9 @@ private:
 #ifndef NDEBUG
 	DxgiInfoManager infoManager;
 #endif
-	IDXGISwapChain* pSwapChain = NULL;
-	ID3D11Device* pDevice = NULL;
-	ID3D11DeviceContext* pContext = NULL;
-	ID3D11RenderTargetView* pTarget = NULL;
+	Microsoft::WRL::ComPtr<IDXGISwapChain> pSwapChain;
+	Microsoft::WRL::ComPtr<ID3D11Device> pDevice;
+	Microsoft::WRL::ComPtr<ID3D11DeviceContext> pContext;
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> pTarget;
 };
 
