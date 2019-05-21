@@ -5,7 +5,7 @@ struct VS_OUTPUT
 };
 
 cbuffer Cbuf {
-	row_major matrix transform;
+	matrix transform;
 };
 
 VS_OUTPUT main(float2 pos : Position, float3 color : Color)
