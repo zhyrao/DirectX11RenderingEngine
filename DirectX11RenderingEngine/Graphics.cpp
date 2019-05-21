@@ -101,7 +101,7 @@ void Graphics::ClearBuffer(float r, float g, float b) noexcept
 	pContext->ClearRenderTargetView(pTarget.Get(), color);
 }
 
-void Graphics::DrawTriangle()
+void Graphics::DrawTriangle(float angle)
 {
 	namespace wrl = Microsoft::WRL;
 	HRESULT hr;
@@ -168,6 +168,39 @@ void Graphics::DrawTriangle()
 
 	// bind index buffer
 	pContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+
+	// create constant buffer for transformation matrix
+	struct ConstantBuffer
+	{
+		struct  
+		{
+			float element[4][4];
+		}transformation;
+	};
+
+	const ConstantBuffer cb =
+	{
+		{
+			(3/4.f) * std::cos(angle), std::sin(angle), 0.f, 0.f,
+			(3/4.f) *-std::sin(angle), std::cos(angle), 0.f, 0.f,
+			0.f,              0.f,	           1.f, 0.f,
+			0.f,			  0.f,			   0.f, 1.f,
+		}
+	};
+	wrl::ComPtr<ID3D11Buffer> pConstantBuffer;
+	D3D11_BUFFER_DESC cbd = {};
+	cbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbd.Usage = D3D11_USAGE_DYNAMIC;
+	cbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cbd.MiscFlags = 0;
+	cbd.ByteWidth = sizeof(cb);
+	cbd.StructureByteStride = 0u;
+	D3D11_SUBRESOURCE_DATA csd = {};
+	csd.pSysMem = &cb;
+	GFX_THROW_INFO(pDevice->CreateBuffer(&cbd, &csd, &pConstantBuffer));
+
+	// bind constant buffer
+	pContext->VSSetConstantBuffers(0, 1, pConstantBuffer.GetAddressOf());
 
 	// create vertex shader
 	wrl::ComPtr<ID3D11VertexShader> pVertexShader;
