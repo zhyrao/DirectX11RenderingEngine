@@ -100,7 +100,7 @@ void Graphics::EndFrame()
 
 void Graphics::ClearBuffer(float r, float g, float b) noexcept
 {
-	const float color[] = { r,g,b,1.f };
+	const float color[] = { .2f, .2f, .2f,1.f };
 	pContext->ClearRenderTargetView(pTarget.Get(), color);
 }
 
@@ -115,6 +115,7 @@ void Graphics::DrawTriangle(float angle, float x, float y)
 		{
 			float x;
 			float y;
+			float z;
 		}pos;
 		struct {
 			unsigned char r;
@@ -125,13 +126,14 @@ void Graphics::DrawTriangle(float angle, float x, float y)
 	};
 
 	const Vertex vertices[] = {
-		{ .0f, .5f ,255 ,0, 0, 0 },
-		{ .5, -.5f , 0, 255, 0, 0},
-		{ -.5f,-.5f, 0, 0.f, 255, 0 },
-
-		{ -.3f,.3f, 0, 255, 0, 0 },
-		{ .3f,.3f, 0, 0, 255, 0 },
-		{ 0.f,-.8f, 255, 0, 0, 0 }
+		{ -1.0f,-1.0f,-1.0f	, 255, 0, 0, 0 },
+		{ 1.0f,-1.0f,-1.0f	, 0, 255, 0, 0},
+		{ -1.0f,1.0f,-1.0f	, 0, 0, 255, 0},
+		{ 1.0f,1.0f,-1.0f	, 255, 0, 255, 0 },
+		{ -1.0f,-1.0f,1.0f	, 0, 255, 255, 0 },
+		{ 1.0f,-1.0f,1.0f	, 255, 255, 0 , 0},
+		{ -1.0f,1.0f,1.0f	, 128, 255, 255, 0},
+		{ 1.0f,1.0f,1.0f	, 0, 0, 0, 0},
 	};
 
 	wrl::ComPtr<ID3D11Buffer> pVertexBuffer;
@@ -152,10 +154,12 @@ void Graphics::DrawTriangle(float angle, float x, float y)
 
 	// CREATE indices buffer
 	const unsigned short indices[] = {
-		0,1,2,
-		0,2,3,
-		0,4,1,
-		2,1,5,
+		0,2,1, 2,3,1,
+		1,3,5, 3,7,5,
+		2,6,3, 3,6,7,
+		4,5,7, 4,7,6,
+		0,4,2, 2,4,6,
+		0,1,4, 1,5,4
 	};
 	wrl::ComPtr<ID3D11Buffer> pIndexBuffer;
 	D3D11_BUFFER_DESC ibd = {};
@@ -180,9 +184,10 @@ void Graphics::DrawTriangle(float angle, float x, float y)
 
 	const ConstantBuffer cb =
 	{
-		dx::XMMatrixTranspose(dx::XMMatrixRotationZ(angle) * 
-		dx::XMMatrixScaling(3 / 4.f, 1.f, 1.f) *
-		dx::XMMatrixTranslation(x, y, 0))
+		dx::XMMatrixTranspose(dx::XMMatrixRotationX(angle) *
+		dx::XMMatrixRotationZ(angle) *
+		dx::XMMatrixTranslation(x, y, 5.f) *
+		dx::XMMatrixPerspectiveLH(1.0f, 3.f/4.f, .5f, 10.f))
 	};
 	wrl::ComPtr<ID3D11Buffer> pConstantBuffer;
 	D3D11_BUFFER_DESC cbd = {};
@@ -211,8 +216,8 @@ void Graphics::DrawTriangle(float angle, float x, float y)
 	// input(Vertex) layout
 	wrl::ComPtr<ID3D11InputLayout> pVertexLayout;
 	const D3D11_INPUT_ELEMENT_DESC ied[] = {
-		{"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"Color", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 8u, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"Color", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 12u, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 	GFX_THROW_INFO(pDevice->CreateInputLayout(
 		ied, (UINT)(std::size(ied)),
