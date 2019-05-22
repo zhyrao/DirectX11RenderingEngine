@@ -75,6 +75,43 @@ Graphics::Graphics(HWND hWnd)
 	wrl::ComPtr<ID3D11Resource> pBackBuffer;
 	GFX_THROW_INFO(pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
 	GFX_THROW_INFO(pDevice->CreateRenderTargetView(pBackBuffer.Get(),NULL,&pTarget));
+
+	// create depth stencil desc
+	D3D11_DEPTH_STENCIL_DESC dsdsc = {};
+	dsdsc.DepthEnable = TRUE;
+	dsdsc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	dsdsc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	dsdsc.StencilEnable = FALSE;
+	
+	wrl::ComPtr<ID3D11DepthStencilState> pDSState;
+	GFX_THROW_INFO(pDevice->CreateDepthStencilState(&dsdsc, &pDSState));
+
+	// bind depth state
+	pContext->OMSetDepthStencilState(pDSState.Get(), 1u);
+
+	// create depth stencil texture
+	wrl::ComPtr<ID3D11Texture2D> pDepthStencil;
+	D3D11_TEXTURE2D_DESC descDepth = {};
+	descDepth.Width = 800u;
+	descDepth.Height = 600u;
+	descDepth.MipLevels = 1u;
+	descDepth.ArraySize = 1u;
+	descDepth.Format = DXGI_FORMAT_D32_FLOAT;
+	descDepth.SampleDesc.Count = 1;
+	descDepth.SampleDesc.Quality = 0u;
+	descDepth.Usage = D3D11_USAGE_DEFAULT;
+	descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	GFX_THROW_INFO(pDevice->CreateTexture2D(&descDepth, NULL, &pDepthStencil));
+
+	// create view of depth stencil state view
+	D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
+	descDSV.Format = DXGI_FORMAT_D32_FLOAT;
+	descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	descDSV.Texture2D.MipSlice = 0u;
+	GFX_THROW_INFO(pDevice->CreateDepthStencilView(pDepthStencil.Get(), &descDSV, &pDSV));
+
+	// bind depth stencil view to OM
+	pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), pDSV.Get());
 }
 
 void Graphics::EndFrame()
@@ -102,9 +139,10 @@ void Graphics::ClearBuffer(float r, float g, float b) noexcept
 {
 	const float color[] = { .2f, .2f, .2f,1.f };
 	pContext->ClearRenderTargetView(pTarget.Get(), color);
+	pContext->ClearDepthStencilView(pDSV.Get(), D3D11_CLEAR_DEPTH, 1, 0u);
 }
 
-void Graphics::DrawTriangle(float angle, float x, float y)
+void Graphics::DrawTriangle(float angle, float x, float z)
 {
 	namespace wrl = Microsoft::WRL;
 	HRESULT hr;
@@ -186,7 +224,7 @@ void Graphics::DrawTriangle(float angle, float x, float y)
 	{
 		dx::XMMatrixTranspose(dx::XMMatrixRotationX(angle) *
 		dx::XMMatrixRotationZ(angle) *
-		dx::XMMatrixTranslation(x, y, 5.f) *
+		dx::XMMatrixTranslation(x, 0.f, z + 4.f) *
 		dx::XMMatrixPerspectiveLH(1.0f, 3.f/4.f, .5f, 10.f))
 	};
 	wrl::ComPtr<ID3D11Buffer> pConstantBuffer;
@@ -272,10 +310,7 @@ void Graphics::DrawTriangle(float angle, float x, float y)
 
 	pContext->PSSetShader(pPixelShader.Get(), 0, 0);
 	//pContext->RSSetState()
-
-	// BIND render targets
-	pContext->OMSetRenderTargets(1u, pTarget.GetAddressOf(), NULL);
-	
+		
 	// config viewport
 	D3D11_VIEWPORT vp;
 	vp.Width = 800;
